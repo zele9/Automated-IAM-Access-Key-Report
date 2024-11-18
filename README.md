@@ -117,5 +117,55 @@ def lambda_handler(event, context):
         age_of_access_keys(writer)
     send_report_to_emails(file_name)
 
+## Challenges and Solutions
+### Issue: `pytz` Import Failure in Lambda
+- **Problem**: The Lambda function was unable to import the `pytz` module, resulting in a `Runtime.ImportModuleError`. For curiosity purposes, I intended on using pytz for timezone conversion, it worked on my local machine but didn't work on lambda
+- **Solution**: In the end, I switched to using the `datetime` module with `timezone.utc` to handle UTC time in the function.
+
+### Issue: Permissions for IAM and SES
+- **Problem**: The Lambda function encountered permission errors when trying to list IAM users and send emails via SES.
+- **Solution**: Updated the Lambda execution role, adding new inline policies to include the necessary permissions for `iam:ListUsers`, `iam:ListAccessKeys`, and `ses:SendRawEmail`.
+
+### Common Errors and Resolutions
+
+#### Error: `Runtime.ImportModuleError: No module named 'pytz'`
+**Solution**: 
+- Instead of relying on `pytz`, use the standard library `datetime` module with `timezone.utc`.
+
+#### Error: `AccessDenied` for `iam:ListUsers`
+**Solution**: 
+- Add the following inline policy to the Lambda execution role:
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "iam:ListUsers",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "iam:ListAccessKeys",
+            "Resource": "arn:aws:iam::989778101181:user/*"
+        }
+    ]
+}
+# Error: AccessDenied for ses:SendRawEmail
+# Solution:
+
+Add the following policy to the Lambda execution role:
+
+json
+{
+    "Effect": "Allow",
+    "Action": "ses:SendRawEmail",
+    "Resource": "arn:aws:ses:us-west-2:989778101181:identity/atabazele@outlook.com"
+}
+How to Contribute
+Submit an Issue: If you encounter any problems or have suggestions, feel free to submit an issue in the GitHub repository. I would really appreciate any contributions towards the `pytz` import failure issue.
+
+Fork and Pull Request: Fork the repository, make your changes, and submit a pull request for review.
+
 # License
 This project is licensed under the MIT License. See the LICENSE file for more details.
